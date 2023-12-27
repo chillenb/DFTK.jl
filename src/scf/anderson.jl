@@ -59,9 +59,7 @@ function Base.push!(anderson::AndersonAcceleration, xₙ, αₙ, Pfxₙ)
     push!(anderson.iterates,  vec(xₙ))
     push!(anderson.residuals, vec(Pfxₙ))
     push!(anderson.errors,    norm(Pfxₙ))
-    if length(anderson.iterates) > anderson.m
-        popfirst!(anderson)
-    end
+    length(anderson.iterates) > anderson.m && popfirst!(anderson)
     @debug "Anderson depth: $(length(anderson.iterates))"
     @assert length(anderson.iterates) <= anderson.m
     @assert length(anderson.iterates) == length(anderson.residuals)
@@ -86,20 +84,21 @@ and returns ``xₙ₊₁``.
     min_error = minimum(anderson.errors; init=norm(Pfxₙ))
     dropindices = findall(anderson.errors .> anderson.errorfactor * min_error)
     deleteat!(anderson, dropindices)
-
     if isempty(anderson.iterates)
         push!(anderson, xₙ, αₙ, Pfxₙ)
         return xₙ .+ αₙ .* Pfxₙ
     end
 
     # Actual acceleration, keeping an eye on maxcond
-    xs     = anderson.iterates
-    Pfxs   = anderson.residuals
+    xs   = anderson.iterates
+    Pfxs = anderson.residuals
 
     M = hcat(Pfxs...) .- vec(Pfxₙ)  # Mᵢⱼ = (Pfxⱼ)ᵢ - (Pfxₙ)ᵢ
     # We need to solve 0 = M' Pfxₙ + M'M βs <=> βs = - (M'M)⁻¹ M' Pfxₙ
 
     # Ensure the condition number of M stays below maxcond, else prune the history
+    # TODO This is too be tested, but in theory the adaptive-depth DIIS mechanism
+    #      we implement, should ensure the condition number to stay bounded as well.
     Mfac = qr(M)
     while size(M, 2) > 1 && cond(Mfac.R) > anderson.maxcond
         M = M[:, 2:end]  # Drop oldest entry in history
