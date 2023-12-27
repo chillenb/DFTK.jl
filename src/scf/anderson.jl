@@ -38,6 +38,8 @@ namely:
     residuals::Vector = []    # Pf(xₙ)
     errors::Vector    = []    # ||Pf(xₙ)||
     m::Int            = 10    # Maximal history size
+    # TODO If adaptive depth anderson has proven itself, increase this default value to
+    # 20 or so --- provided that we do not use too much memory if 20 steps are actually taken.
     maxcond::Real     = 1e6   # Maximal condition number for Anderson matrix
     errorfactor::Real = 1e4   # Maximal error factor for iterate to be kept
 end
