@@ -20,11 +20,13 @@ considered) never exceeds `m`. This value should ideally be chosen to be the max
 value fitting in memory as we use other measures on top to take care of conditioning issues,
 namely:
 - We monitor the conditioning of the Anderson linear system and to drop the
-oldest entries as soon as its condition number exceeds `maxcond`.
+  oldest entries as soon as its condition number exceeds `maxcond`.
 - We follow [1] (adaptive Anderson acceleration) and drop iterates, which do not satisfy
   ```math
       \|P⁻¹ f(xᵢ)\| < \text{errorfactor} minᵢ \|P⁻¹ f(xᵢ)\|.
   ```
+  This means the best way to save memory is to reduce `errorfactor` to `1e3` or `100`,
+  which reduces the effective window size.
   Note that in comparison to the adaptive damping reference implementation of [1], we
   use ``\text{errorfactor} = 1/δ``.
 
@@ -75,13 +77,13 @@ Accelerate the fixed-point scheme
 using Anderson acceleration. Requires `Pfxₙ` is ``P⁻¹ f(xₙ)``, ``xₙ`` and ``αₙ``
 and returns ``xₙ₊₁``.
 """
-function (anderson::AndersonAcceleration)(xₙ, αₙ, Pfxₙ)
-    if anderson.m == 0 || anderson.errorfactor < 1  # Disables Anderson
-        return xₙ .+ αₙ .* Pfxₙ
+@timing "Anderson acceleration" function (anderson::AndersonAcceleration)(xₙ, αₙ, Pfxₙ)
+    if anderson.m == 0 || anderson.errorfactor ≤ 1 || anderson.maxcond ≤ 1
+        return xₙ .+ αₙ .* Pfxₙ  # Disables Anderson
     end
 
     # Adaptive damping Anderson: Ensure δ |Pfxᵢ| ≤ minᵢ |Pfxᵢ|
-    min_error = min(norm(Pfxₙ), minimum(anderson.errors; init=typemax(eltype(Pfxₙ))))
+    min_error = minimum(anderson.errors; init=norm(Pfxₙ))
     dropindices = findall(anderson.errors .> anderson.errorfactor * min_error)
     deleteat!(anderson, dropindices)
 
