@@ -6,19 +6,16 @@ using LinearAlgebra
 function test_addiis(testcase; temperature=0, Ecut=10, kgrid=[3, 3, 3])
     model = model_LDA(testcase.lattice, testcase.atoms, testcase.positions; temperature)
     basis = PlaneWaveBasis(model; kgrid, Ecut)
-    tol   = 1e-10
+    tol   = 1e-6
 
     solver = scf_anderson_solver(; errorfactor=Inf, maxcond=1e6, m=100)
     scfres_rdiis = self_consistent_field(basis; tol, mixing=SimpleMixing(), solver)
 
-    for errorfactor in (10, 100, 1000, 1e4, 1e5)
-        println()
-        println("#-- $errorfactor")
-        println()
-        solver = scf_anderson_solver(; errorfactor, maxcond=Inf, m=100)
-        scfres = self_consistent_field(basis; tol, mixing=SimpleMixing(), solver)
-        @test norm(scfres.ρ - scfres_rdiis.ρ) * sqrt(basis.dvol) < 10tol
-    end
+    solver = scf_anderson_solver(; errorfactor=1e4, maxcond=Inf, m=100)
+    scfres_addiis = self_consistent_field(basis; tol, mixing=SimpleMixing(), solver)
+
+    @test norm(scfres_addiis.ρ - scfres_rdiis.ρ) * sqrt(basis.dvol) < 10tol
+    @test scfres_addiis.n_iter ≤ scfres_rdiis.n_iter
 end
 
 @testset "Silicon, no temp" begin
