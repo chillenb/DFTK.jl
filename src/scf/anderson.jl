@@ -60,6 +60,7 @@ function Base.push!(anderson::AndersonAcceleration, xₙ, αₙ, Pfxₙ)
     if length(anderson.iterates) > anderson.m
         popfirst!(anderson)
     end
+    @debug "Anderson depth: $(length(anderson.iterates))"
     @assert length(anderson.iterates) <= anderson.m
     @assert length(anderson.iterates) == length(anderson.residuals)
     @assert length(anderson.iterates) == length(anderson.errors)
