@@ -21,17 +21,16 @@ value fitting in memory as we use other measures on top to take care of conditio
 namely:
 - We monitor the conditioning of the Anderson linear system and to drop the
   oldest entries as soon as its condition number exceeds `maxcond`.
-- We follow [1] (adaptive Anderson acceleration) and drop iterates, which do not satisfy
+- We follow [^CDLS21] (adaptive Anderson acceleration) and drop iterates, which do not satisfy
   ```math
       \|P⁻¹ f(xᵢ)\| < \text{errorfactor} minᵢ \|P⁻¹ f(xᵢ)\|.
   ```
   This means the best way to save memory is to reduce `errorfactor` to `1e3` or `100`,
   which reduces the effective window size.
-  Note that in comparison to the adaptive damping reference implementation of [1], we
+  Note that in comparison to the adaptive damping reference implementation of [^CDLS21], we
   use ``\text{errorfactor} = 1/δ``.
 
-[1] Chupin, Dupuy, Legendre, Séré. Math. Model. Num. Anal. **55**, 2785 (2021)
-    DOI [10.1051/m2an/2021069](https://doi.org/10.1051/m2an/2021069)
+[^CDLS21]: Chupin, Dupuy, Legendre, Séré. Math. Model. Num. Anal. **55**, 2785 (2021) dDOI [10.1051/m2an/2021069](https://doi.org/10.1051/m2an/2021069)
 """
 @kwdef struct AndersonAcceleration
     iterates::Vector  = []    # xₙ
