@@ -8,11 +8,11 @@
 
 """
 Create a damped SCF solver updating the density as
-`x = β * x_new + (1 - β) * x`
+`x = damping * x_new + (1 - damping) * x`
 """
-function scf_damping_solver(; β=0.2)
+function scf_damping_solver(; damping=0.2)
     function fp_solver(f, x0, max_iter; tol=1e-6)
-        β = convert(eltype(x0), β)
+        β = convert(eltype(x0), damping)
         converged = false
         x = copy(x0)
         for i = 1:max_iter
